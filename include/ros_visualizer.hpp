@@ -86,6 +86,10 @@ public:
         cameraposevisual_.setLineWidth(0.01);
 
         pub_point_cloud_ = n.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("point_cloud", 1000);
+
+        // Adding nav_msgs/Odometry message
+        //
+        pub_ov2odom = n.advertise<nav_msgs::Odometry>("ov2slam_odometry", 1000);
         
         pub_kfs_traj_ = n.advertise<visualization_msgs::Marker>("kfs_traj", 1000);
         pub_kfs_pose_ = n.advertise<visualization_msgs::MarkerArray>("local_kfs_window", 1000);
@@ -101,6 +105,8 @@ public:
         final_kfs_traj_msg_.color.r = 0.75;
         final_kfs_traj_msg_.color.g = 0.25;
         final_kfs_traj_msg_.color.b = 0.25;
+
+        bool odomUpdateReady = false;
     }
 
     void pubTrackImage(const cv::Mat &imgTrack, const double time)
@@ -121,11 +127,13 @@ public:
         // 1. Publish marker message
         // =========================
         vo_traj_msg_.header.stamp = ros::Time(time);
-        vo_traj_msg_.header.frame_id = "world";
+        vo_traj_msg_.header.frame_id = "ov2slam";
 
+        // Updating in order to be in standard ROS coordinate frame
         geometry_msgs::Point p;
         const Eigen::Vector3d &twc = Twc.translation();
         p.x = twc.x(); p.y = twc.y(); p.z = twc.z();
+        //p.x = twc.z(); p.y = -1 * twc.x(); p.z = twc.y();
 
         if( p.x > 50. || p.y > 50. || p.z > 50 ) {
             if( vo_traj_msg_.scale.x < 0.1 ) {
@@ -134,6 +142,17 @@ public:
                 final_kfs_traj_msg_.scale.x *= 20;     
             }
         }
+        // Conversion for standard ROS coordinate frame
+        //ov2odom.pose.pose.position.x = p.z;
+        //ov2odom.pose.pose.position.y = -1 * p.x;
+        //ov2odom.pose.pose.position.z = p.y;
+
+        nav_msgs::Odometry ov2odom;
+        ov2odom.header = vo_traj_msg_.header;
+        ov2odom.pose.pose.position.x = p.z;
+        ov2odom.pose.pose.position.y = -1 * p.x;
+        ov2odom.pose.pose.position.z = p.y;
+        pub_ov2odom.publish(ov2odom);
 
         vo_traj_msg_.points.push_back(p);
 
@@ -302,6 +321,10 @@ public:
     CameraPoseVisualization cameraposevisual_;
 
     ros::Publisher pub_point_cloud_;
+
+    // Adding nav_msgs/Odometry message
+    //
+    ros::Publisher pub_ov2odom;
 
     ros::Publisher pub_kfs_pose_;
     std::vector<CameraPoseVisualization> vkeyframesposevisual_;

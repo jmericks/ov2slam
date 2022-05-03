@@ -4,7 +4,7 @@ trap : SIGTERM SIGINT
 function echoUsage()
 {
     echo -e "Usage: ./run.sh [FLAG] [PARAMETER FILE PATH FROM HOST] \n\
-            \t -ov2slam : Run ov2slam \n\
+            \t -o : Run ov2slam \n\
             \t -h help \n
             \t Example: ./run.sh -ov2slam /home/agslam/ov2slam/parameters_files/camera.yaml \n " >&2
 }
@@ -128,7 +128,7 @@ if [ $DO_OV2SLAM -eq 1 ]; then
             source devel/setup.bash; \
             rosrun ov2slam ov2slam_node ${CONFIG_IN_DOCKER}"
 fi
-# -v ${OV2SLAM_DIR}/parameters_files:/root/catkin_ws/src/ov2slam/parameters_files \
+
 wait $ROSCORE_PID
 wait $RVIZ_PID
 

@@ -116,7 +116,7 @@ public:
         }
 
         std_msgs::Header header;
-        header.frame_id = "world";
+        header.frame_id = "ov2slam";
         header.stamp = ros::Time(time);
         sensor_msgs::ImagePtr imgTrackMsg = cv_bridge::CvImage(header, "rgb8", imgTrack).toImageMsg();
         pub_image_track_.publish(imgTrackMsg);
@@ -180,7 +180,7 @@ public:
         transform.setRotation(qtf);
 
         static tf::TransformBroadcaster br;
-        br.sendTransform(tf::StampedTransform(transform, ros::Time(time), "world", "camera"));
+        br.sendTransform(tf::StampedTransform(transform, ros::Time(time), "ov2slam", "camera"));
 
         // 3. Publish camera visual
         // =========================
@@ -229,7 +229,7 @@ public:
         }
 
         std_msgs::Header header;
-        header.frame_id = "world";
+        header.frame_id = "ov2slam";
         header.stamp = ros::Time(time);
 
         visualization_msgs::MarkerArray markerArray_msg;
@@ -259,7 +259,7 @@ public:
         }
 
         std_msgs::Header header;
-        header.frame_id = "world";
+        header.frame_id = "ov2slam";
         header.stamp = ros::Time(time);
 
         pcloud->header = pcl_conversions::toPCL(header);
@@ -287,7 +287,7 @@ public:
         }
 
         kfs_traj_msg_.header.stamp = ros::Time(time);
-        kfs_traj_msg_.header.frame_id = "world";
+        kfs_traj_msg_.header.frame_id = "ov2slam";
 
         pub_kfs_traj_.publish(kfs_traj_msg_);
     }
@@ -299,7 +299,7 @@ public:
         }
 
         final_kfs_traj_msg_.header.stamp = ros::Time(time);
-        final_kfs_traj_msg_.header.frame_id = "world";
+        final_kfs_traj_msg_.header.frame_id = "ov2slam";
 
         geometry_msgs::Point p;
         const Eigen::Vector3d twc = Twc.translation();

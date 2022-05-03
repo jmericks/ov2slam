@@ -149,9 +149,9 @@ public:
 
         nav_msgs::Odometry ov2odom;
         ov2odom.header = vo_traj_msg_.header;
-        ov2odom.pose.pose.position.x = p.z;
-        ov2odom.pose.pose.position.y = -1 * p.x;
-        ov2odom.pose.pose.position.z = p.y;
+        ov2odom.pose.pose.position.x = p.x;
+        ov2odom.pose.pose.position.y = p.y;
+        ov2odom.pose.pose.position.z = p.z;
         pub_ov2odom.publish(ov2odom);
 
         vo_traj_msg_.points.push_back(p);

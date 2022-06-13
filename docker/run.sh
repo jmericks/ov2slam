@@ -5,6 +5,7 @@ function echoUsage()
 {
     echo -e "Usage: ./run.sh [FLAG] [PARAMETER FILE PATH FROM HOST] \n\
             \t -o : Run ov2slam \n\
+	        \t -b : Build ov2slam \n\
             \t -h help \n
             \t Example: ./run.sh -ov2slam /home/agslam/ov2slam/parameters_files/camera.yaml \n " >&2
 }
@@ -79,8 +80,8 @@ function relativePath()
 DO_OV2SLAM=0
 DO_VINS=0
 KITTI=0
-
-while getopts "holk" opt; do
+BUILD=0
+while getopts "holkb" opt; do
     case "$opt" in
         h)
             echoUsage
@@ -92,13 +93,14 @@ while getopts "holk" opt; do
             ;;
         k)  KITTI=1
             ;;
+        b)  BUILD=1
+	        ;;
         *)
             echoUsage
             exit 1
             ;;
     esac
 done
-
 
  CONFIG_IN_DOCKER="/root/catkin_ws/src/ov2slam/$(relativePath $(absPath ..) $(absPath ${*: -1}))"
 
@@ -112,7 +114,7 @@ sleep 1
 
 OV2SLAM_DIR=$(absPath "..")
 
-if [ $DO_OV2SLAM -eq 1 ]; then
+if [[ $DO_OV2SLAM -eq 1 ]] && [[ $BUILD -eq 0 ]]; then
         docker run \
         -it \
         --rm \
@@ -123,10 +125,26 @@ if [ $DO_OV2SLAM -eq 1 ]; then
         agslam/ov2slam:V1 \
         /bin/bash -c \
         "cd /root/catkin_ws/; \
-
             catkin build; \
             source devel/setup.bash; \
             rosrun ov2slam ov2slam_node ${CONFIG_IN_DOCKER}"
+fi
+
+if [[ $DO_OV2SLAM -eq 1 ]] && [[ $BUILD -eq 1 ]]; then
+        docker run \
+        -it \
+        --rm \
+        --net=host \
+        -v ${OV2SLAM_DIR}/include:/root/catkin_ws/src/ov2slam/include \
+        -v ${OV2SLAM_DIR}/src:/root/catkin_ws/src/ov2slam/src \
+        -v ${OV2SLAM_DIR}/parameters_files:/root/catkin_ws/src/ov2slam/parameters_files \
+        agslam/ov2slam:V1 \
+        /bin/bash -c \
+        "cd /root/catkin_ws/; \
+            catkin build; \ 
+            source devel/setup.bash; \
+            rosrun ov2slam ov2slam_node ${CONFIG_IN_DOCKER}"
+
 fi
 
 wait $ROSCORE_PID

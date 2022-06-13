@@ -52,6 +52,10 @@
 
 #include <pcl_ros/point_cloud.h>
 
+// Including transform broadcaster to change coordinates to ROS Standard
+#include <tf2_ros/static_transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
+
 #include <sophus/se3.hpp>
 
 #include "camera_visualizer.hpp"
@@ -89,7 +93,24 @@ public:
 
         // Adding nav_msgs/Odometry message
         //
-        pub_ov2odom = n.advertise<nav_msgs::Odometry>("ov2slam_odometry", 1000);
+        pub_ov2odom = n.advertise<nav_msgs::Odometry>("/visual_asynch", 1000);
+        // Add static transform to ros standard 
+        //
+        //ov2slam_to_ros_transform.header.stamp = ros::Time::now();
+        //ov2slam_to_ros_transform.header.frame_id = "ov2slam_ros";
+        //ov2slam_to_ros_transform.child_frame_id = "ov2slam";
+        //ov2slam_to_ros_transform.transform.translation.x = 0.0;
+        //ov2slam_to_ros_transform.transform.translation.y = 0.0;
+        //ov2slam_to_ros_transform.transform.translation.z = 0.0;
+        //ov2slam_to_ros_transform.transform.rotation.x = 0.5;
+        //ov2slam_to_ros_transform.transform.rotation.y = 0.5;
+        //ov2slam_to_ros_transform.transform.rotation.z = 0.5;
+        //ov2slam_to_ros_transform.transform.rotation.w = -0.5;
+
+        //ov2slam_to_ros_broadcaster.sendTransform(ov2slam_to_ros_transform);
+
+       
+        
         
         pub_kfs_traj_ = n.advertise<visualization_msgs::Marker>("kfs_traj", 1000);
         pub_kfs_pose_ = n.advertise<visualization_msgs::MarkerArray>("local_kfs_window", 1000);
@@ -142,17 +163,7 @@ public:
                 final_kfs_traj_msg_.scale.x *= 20;     
             }
         }
-        // Conversion for standard ROS coordinate frame
-        //ov2odom.pose.pose.position.x = p.z;
-        //ov2odom.pose.pose.position.y = -1 * p.x;
-        //ov2odom.pose.pose.position.z = p.y;
 
-        nav_msgs::Odometry ov2odom;
-        ov2odom.header = vo_traj_msg_.header;
-        ov2odom.pose.pose.position.x = p.x;
-        ov2odom.pose.pose.position.y = p.y;
-        ov2odom.pose.pose.position.z = p.z;
-        pub_ov2odom.publish(ov2odom);
 
         vo_traj_msg_.points.push_back(p);
 
@@ -181,6 +192,22 @@ public:
 
         static tf::TransformBroadcaster br;
         br.sendTransform(tf::StampedTransform(transform, ros::Time(time), "ov2slam", "camera"));
+
+        // Conversion for standard ROS coordinate frame
+        //ov2odom.pose.pose.position.x = p.z;
+        //ov2odom.pose.pose.position.y = -1 * p.x;
+        //ov2odom.pose.pose.position.z = p.y;
+
+        nav_msgs::Odometry ov2odom;
+        ov2odom.header = vo_traj_msg_.header;
+        ov2odom.pose.pose.position.x = p.x;
+        ov2odom.pose.pose.position.y = p.y;
+        ov2odom.pose.pose.position.z = p.z;
+        ov2odom.pose.pose.orientation.x = q.x;
+        ov2odom.pose.pose.orientation.y = q.y;
+        ov2odom.pose.pose.orientation.z = q.z;
+        ov2odom.pose.pose.orientation.w = q.w;
+        pub_ov2odom.publish(ov2odom);
 
         // 3. Publish camera visual
         // =========================
@@ -312,6 +339,12 @@ public:
         return;
     }
 
+    // Adding static transform broadcaster 
+    //
+    //tf2_ros::StaticTransformBroadcaster ov2slam_to_ros_broadcaster;
+    //geometry_msgs::TransformStamped ov2slam_to_ros_transform;
+
+
     ros::Publisher pub_image_track_;
 
     ros::Publisher pub_vo_traj_, pub_vo_pose_;
@@ -325,6 +358,10 @@ public:
     // Adding nav_msgs/Odometry message
     //
     ros::Publisher pub_ov2odom;
+
+
+
+
 
     ros::Publisher pub_kfs_pose_;
     std::vector<CameraPoseVisualization> vkeyframesposevisual_;
